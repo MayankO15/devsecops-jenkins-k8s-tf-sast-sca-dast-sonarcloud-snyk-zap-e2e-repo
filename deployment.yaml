@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: jagpsi
-        image: 139713842946.dkr.ecr.us-west-2.amazonaws.com/jagpsi
+        image: 139713842946.dkr.ecr.us-west-2.amazonaws.com/jagpsi:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
