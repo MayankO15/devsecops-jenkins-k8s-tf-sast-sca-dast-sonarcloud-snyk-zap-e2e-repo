@@ -11,8 +11,8 @@ pipeline {
             steps {
                 sh '''
                 mvn clean verify sonar:sonar \
-                -Dsonar.projectKey=jagpsi \
-                -Dsonar.organization=jagpsi \
+                -Dsonar.projectKey=mayank \
+                -Dsonar.organization=mayank \
                 -Dsonar.host.url=https://sonarcloud.io \
                 -Dsonar.token=6726538a117b7d05fae0a9525f663240b474a17e
                 '''
