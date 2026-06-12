@@ -14,7 +14,7 @@ pipeline {
                 -Dsonar.projectKey=jagpsi \
                 -Dsonar.organization=jagpsi \
                 -Dsonar.host.url=https://sonarcloud.io \
-                -Dsonar.token=59908b260d2571608cafb7f096d92e4f10e78cb6
+                -Dsonar.token=6726538a117b7d05fae0a9525f663240b474a17e
                 '''
             }
         }
@@ -31,7 +31,7 @@ pipeline {
             steps {
                 withDockerRegistry([credentialsId: 'dockerlogin', url: '']) {
                     script {
-                        app = docker.build("jagpsi")
+                        app = docker.build("mayank")
                     }
                 }
             }
@@ -41,7 +41,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry(
-                        'https://139713842946.dkr.ecr.us-west-2.amazonaws.com',
+                        '079819354494.dkr.ecr.us-west-2.amazonaws.com/mayank',
                         'ecr:us-west-2:aws-credentials'
                     ) {
                         app.push("latest")
