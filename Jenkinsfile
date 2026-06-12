@@ -14,7 +14,7 @@ pipeline {
                 -Dsonar.projectKey=jagpsi \
                 -Dsonar.organization=jagpsi \
                 -Dsonar.host.url=https://sonarcloud.io \
-                -Dsonar.token=5e3f77bafff78138c2427798e42b4c1232da9502
+                -Dsonar.token=59908b260d2571608cafb7f096d92e4f10e78cb6
                 '''
             }
         }
