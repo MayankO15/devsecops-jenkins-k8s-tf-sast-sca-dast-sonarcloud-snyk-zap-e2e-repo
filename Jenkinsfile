@@ -14,7 +14,7 @@ pipeline {
                 -Dsonar.projectKey=mayank \
                 -Dsonar.organization=mayank \
                 -Dsonar.host.url=https://sonarcloud.io \
-                -Dsonar.token=6726538a117b7d05fae0a9525f663240b474a17e
+                -Dsonar.token=cb390e465e98126aa74adaa0c99bfece9cffdf14
                 '''
             }
         }
