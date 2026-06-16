@@ -78,7 +78,7 @@ pipeline {
             steps {
                 sh '''
                 pwd
-                sleep 180
+                sleep 360
                 echo "Application has been deployed on K8S"
                 '''
             }
