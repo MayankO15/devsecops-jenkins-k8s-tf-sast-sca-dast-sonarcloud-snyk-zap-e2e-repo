@@ -36,3 +36,9 @@ spec:
   type: LoadBalancer
   selector:
     app: jagpsi
+# Create Namespace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devsecops
