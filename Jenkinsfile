@@ -107,7 +107,7 @@ pipeline {
 //    stages{
 //     stage('CompileandRunSonarAnalysis') {
 //             steps {	
-// 		sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=jagpsi -Dsonar.organization=jagpsi -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=5e3f77bafff78138c2427798e42b4c1232da9502'
+// 		sh 'mvn clean verify sonar:sonar -Dsonar.projectKey=mayank -Dsonar.organization=mayank -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=5e3f77bafff78138c2427798e42b4c1232da9502'
 // 			}
 //     }
 
@@ -123,7 +123,7 @@ pipeline {
 //             steps { 
 //                withDockerRegistry([credentialsId: "dockerlogin", url: ""]) {
 //                  script{
-//                  app =  docker.build("jagpsi")
+//                  app =  docker.build("mayank")
 //                  }
 //                }
 //             }
