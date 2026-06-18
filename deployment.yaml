@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: mayank
-        image: 139713842946.dkr.ecr.us-west-2.amazonaws.com/jagpsi:latest
+        image: 139713842946.dkr.ecr.us-west-2.amazonaws.com/mayank:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
