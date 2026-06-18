@@ -4,6 +4,15 @@ pipeline {
     tools {
         maven 'Maven_3_8_4'
     }
+
+	stage('Create Namespace') {
+    	steps {
+        	sh '''
+        	kubectl get namespace devsecops || \
+        	kubectl create namespace devsecops
+        	'''
+    }
+}
 	
     stages {
 
@@ -84,30 +93,18 @@ pipeline {
             }
         }
 
-        stage('Run DAST Using ZAP') {
-    steps {
-        withKubeConfig([credentialsId: 'kubelogin']) {
-            sh '''
-            APP_URL=$(kubectl get svc mayank -n devsecops -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-            APP_URL="http://${APP_URL}"
-
-            echo "Scanning ${APP_URL}"
-
-            docker run --rm \
-              -v ${WORKSPACE}:/zap/wrk \
-              ghcr.io/zaproxy/zaproxy:stable \
-              zap-baseline.py \
-              -t ${APP_URL} \
-              -r zap_report.html
-            '''
-        }
-
-        archiveArtifacts artifacts: 'zap_report.html', fingerprint: true
-    }
-}
- 
+        
+	stage('RunDASTUsingZAP') {
+          steps {
+		    withKubeConfig([credentialsId: 'kubelogin']) {
+				sh('zap.sh -cmd -quickurl http://$(kubectl get services/mayank --namespace=devsecops -o json| jq -r ".status.loadBalancer.ingress[] | .hostname") -quickprogress -quickout ${WORKSPACE}/zap_report.html')
+				archiveArtifacts artifacts: 'zap_report.html'
+		    }
+	     }
+       } 
   }
 }
+
 
 
 
