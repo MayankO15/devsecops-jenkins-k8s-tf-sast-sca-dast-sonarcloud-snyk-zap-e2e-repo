@@ -5,15 +5,6 @@ pipeline {
         maven 'Maven_3_8_4'
     }
 
-	stage('Create Namespace') {
-    	steps {
-        	sh '''
-        	kubectl get namespace devsecops || \
-        	kubectl create namespace devsecops
-        	'''
-    }
-}
-	
     stages {
 
         stage('Compile and Run Sonar Analysis') {
