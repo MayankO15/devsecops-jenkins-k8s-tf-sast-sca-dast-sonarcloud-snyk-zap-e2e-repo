@@ -1,4 +1,3 @@
-Correct this Jenkins file code 
 "pipeline {
     agent any
 
