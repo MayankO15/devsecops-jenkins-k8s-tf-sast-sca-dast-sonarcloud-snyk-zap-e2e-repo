@@ -85,28 +85,25 @@ pipeline {
         }
 
         stage('Run DAST Using ZAP') {
-		steps {
-		withKubeConfig([credentialsId: 'kubelogin']) {
-		sh '''
-		APP_URL=http://$(kubectl get svc mayank 
-		-n devsecops 
-		-o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+    steps {
+        withKubeConfig([credentialsId: 'kubelogin']) {
+            sh '''
+            APP_URL=$(kubectl get svc mayank -n devsecops -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            APP_URL="http://${APP_URL}"
 
-		```
-           	 echo "Scanning ${APP_URL}"
+            echo "Scanning ${APP_URL}"
 
-             docker run --rm \
+            docker run --rm \
               -v ${WORKSPACE}:/zap/wrk \
               ghcr.io/zaproxy/zaproxy:stable \
               zap-baseline.py \
               -t ${APP_URL} \
               -r zap_report.html
-        '''
+            '''
+        }
+
+        archiveArtifacts artifacts: 'zap_report.html', fingerprint: true
     }
-
-    archiveArtifacts artifacts: 'zap_report.html', fingerprint: true
-}
-
 }
  
   }
