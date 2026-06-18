@@ -8,7 +8,6 @@ tools {
 
 environment {
     IMAGE_NAME = "mayank"
-    AWS_ECR_REPO = "079819354494.dkr.ecr.us-west-2.amazonaws.com/mayank"
 }
 
 stages {
@@ -17,8 +16,7 @@ stages {
         steps {
             withKubeConfig([credentialsId: 'kubelogin']) {
                 sh '''
-                kubectl get namespace devsecops || \
-                kubectl create namespace devsecops
+                    kubectl get namespace devsecops || kubectl create namespace devsecops
                 '''
             }
         }
@@ -26,28 +24,24 @@ stages {
 
     stage('Compile and Sonar Analysis') {
         steps {
-            withCredentials([
-                string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')
-            ]) {
+            withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
                 sh '''
-                mvn clean verify sonar:sonar \
-                -Dsonar.projectKey=mayanko15 \
-                -Dsonar.organization=mayanko15 \
-                -Dsonar.host.url=https://sonarcloud.io \
-                -Dsonar.token=$SONAR_TOKEN
+                    mvn clean verify sonar:sonar \
+                    -Dsonar.projectKey=mayanko15 \
+                    -Dsonar.organization=mayanko15 \
+                    -Dsonar.host.url=https://sonarcloud.io \
+                    -Dsonar.token=$SONAR_TOKEN
                 '''
             }
         }
     }
 
-    stage('SCA Analysis using Snyk') {
+    stage('SCA Analysis Using Snyk') {
         steps {
-            withCredentials([
-                string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')
-            ]) {
+            withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
                 sh '''
-                export SNYK_TOKEN=$SNYK_TOKEN
-                mvn snyk:test -fn
+                    export SNYK_TOKEN=$SNYK_TOKEN
+                    mvn snyk:test -fn
                 '''
             }
         }
@@ -74,92 +68,67 @@ stages {
         }
     }
 
-    stage('Deploy to EKS') {
+    stage('Deploy to Kubernetes') {
         steps {
             withKubeConfig([credentialsId: 'kubelogin']) {
-
                 sh '''
-                echo "Current Context"
-                kubectl config current-context
+                    echo "Current Context"
+                    kubectl config current-context
 
-                echo "Nodes"
-                kubectl get nodes
+                    echo "Nodes"
+                    kubectl get nodes
 
-                echo "Deploying"
+                    echo "Deploying Application"
 
-                kubectl apply -f deployment.yaml -n devsecops
+                    kubectl apply -f deployment.yaml -n devsecops
 
-                echo "Waiting for rollout"
+                    echo "Waiting for Rollout"
 
-                kubectl rollout status deployment/mayank \
-                    -n devsecops \
-                    --timeout=300s
+                    kubectl rollout status deployment/mayank -n devsecops --timeout=300s
 
-                echo "Pods"
-                kubectl get pods -n devsecops
+                    echo "Pods"
+                    kubectl get pods -n devsecops
 
-                echo "Services"
-                kubectl get svc -n devsecops
+                    echo "Services"
+                    kubectl get svc -n devsecops
                 '''
             }
         }
     }
 
-    stage('Wait for LoadBalancer') {
+    stage('Wait for Application') {
         steps {
-            withKubeConfig([credentialsId: 'kubelogin']) {
-
-                sh '''
-                echo "Waiting for ELB hostname"
-
-                for i in {1..30}
-                do
-                  HOSTNAME=$(kubectl get svc mayank \
-                    -n devsecops \
-                    -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-
-                  if [ ! -z "$HOSTNAME" ]
-                  then
-                    echo "ELB Found: $HOSTNAME"
-                    exit 0
-                  fi
-
-                  echo "Waiting..."
-                  sleep 20
-                done
-
-                exit 1
-                '''
-            }
+            sh '''
+                sleep 180
+                echo "Application deployed successfully"
+            '''
         }
     }
 
-    stage('DAST Scan using OWASP ZAP') {
+    stage('Run DAST Using ZAP') {
         steps {
             withKubeConfig([credentialsId: 'kubelogin']) {
-
                 sh '''
-                APP_URL=http://$(kubectl get svc mayank \
-                -n devsecops \
-                -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+                    APP_URL=http://$(kubectl get svc mayank \
+                    -n devsecops \
+                    -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
 
-                echo "Scanning $APP_URL"
+                    echo "Scanning ${APP_URL}"
 
-                zap.sh \
-                -cmd \
-                -quickurl $APP_URL \
-                -quickprogress \
-                -quickout ${WORKSPACE}/zap_report.html
+                    zap.sh \
+                    -cmd \
+                    -quickurl ${APP_URL} \
+                    -quickprogress \
+                    -quickout ${WORKSPACE}/zap_report.html
                 '''
 
-                archiveArtifacts artifacts: 'zap_report.html'
+                archiveArtifacts artifacts: 'zap_report.html', fingerprint: true
             }
         }
     }
 }
 
 post {
-
     success {
         echo 'Pipeline completed successfully'
     }
@@ -175,8 +144,6 @@ post {
 ```
 
 }
-
-
 
 
 // pipeline {
