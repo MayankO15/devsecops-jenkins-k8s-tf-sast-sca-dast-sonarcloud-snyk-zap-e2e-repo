@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jagpsi-deployment
+  name: mayank-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: jagpsi
+      app: mayank
   template:
     metadata:
       labels:
-        app: jagpsi
+        app: mayank
     spec:
       containers:
-      - name: jagpsi
+      - name: mayank
         image: 139713842946.dkr.ecr.us-west-2.amazonaws.com/jagpsi:latest
         imagePullPolicy: Always
         ports:
@@ -24,9 +24,9 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: jagpsi
-    k8s-app: jagpsi
-  name: jagpsi
+    app: mayank
+    k8s-app: mayank
+  name: mayank
 spec:
   ports:
   - name: http
@@ -35,10 +35,4 @@ spec:
     targetPort: 8080
   type: LoadBalancer
   selector:
-    app: jagpsi
-# Create Namespace
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: devsecops
+    app: mayank
