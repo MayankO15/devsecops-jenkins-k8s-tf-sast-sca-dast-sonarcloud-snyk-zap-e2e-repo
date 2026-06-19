@@ -77,7 +77,7 @@ stages {
     stage('Wait for Testing') {
         steps {
             sh '''
-            sleep 120
+            sleep 360
             echo "Application deployed on Kubernetes"
             '''
         }
