@@ -10,10 +10,12 @@ stages {
 
     stage('Create Namespace') {
         steps {
-            sh '''
-            kubectl get namespace devsecops || \
-            kubectl create namespace devsecops
-            '''
+            withKubeConfig([credentialsId: 'kubelogin']) {
+                sh '''
+                kubectl get namespace devsecops >/dev/null 2>&1 || \
+                kubectl create namespace devsecops
+                '''
+            }
         }
     }
 
@@ -24,14 +26,14 @@ stages {
             -Dsonar.projectKey=mayanko15 \
             -Dsonar.organization=mayanko15 \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=cb390e465e98126aa74adaa0c99bfece9cffdf14
+            -Dsonar.token=$SONAR_TOKEN
             '''
         }
     }
 
     stage('Run SCA Analysis Using Snyk') {
         steps {
-            withCredentials([string(credentialsId: 'SYNK_TOKEN', variable: 'SYNK_TOKEN')]) {
+            withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
                 sh 'mvn snyk:test -fn'
             }
         }
@@ -39,10 +41,8 @@ stages {
 
     stage('Build Docker Image') {
         steps {
-            withDockerRegistry([credentialsId: 'dockerlogin', url: '']) {
-                script {
-                    app = docker.build("mayank")
-                }
+            script {
+                app = docker.build("mayank")
             }
         }
     }
@@ -64,20 +64,10 @@ stages {
         steps {
             withKubeConfig([credentialsId: 'kubelogin']) {
                 sh '''
-                echo "Current Context"
-                kubectl config current-context
-
-                echo "Nodes"
-                kubectl get nodes
-
-                echo "Deploying"
                 kubectl delete all --all -n devsecops || true
                 kubectl apply -f deployment.yaml -n devsecops
 
-                echo "Pods"
                 kubectl get pods -n devsecops
-
-                echo "Services"
                 kubectl get svc -n devsecops
                 '''
             }
@@ -87,26 +77,39 @@ stages {
     stage('Wait for Testing') {
         steps {
             sh '''
-            pwd
-            sleep 360
-            echo "Application has been deployed on K8S"
+            sleep 120
+            echo "Application deployed on Kubernetes"
             '''
         }
     }
 
-    stage('RunDASTUsingZAP') {
+    stage('Run DAST Using ZAP') {
         steps {
             withKubeConfig([credentialsId: 'kubelogin']) {
                 sh '''
-                zap.sh -cmd \
-                -quickurl http://$(kubectl get services/mayank --namespace=devsecops -o json | jq -r ".status.loadBalancer.ingress[] | .hostname") \
-                -quickprogress \
-                -quickout ${WORKSPACE}/zap_report.html
-                '''
+                APP_URL=$(kubectl get svc mayank \
+                -n devsecops \
+                -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
 
-                archiveArtifacts artifacts: 'zap_report.html'
+                echo "Target URL: http://$APP_URL"
+
+                docker run --rm \
+                -v ${WORKSPACE}:/zap/wrk \
+                ghcr.io/zaproxy/zaproxy:stable \
+                zap-baseline.py \
+                -t http://$APP_URL \
+                -r zap_report.html
+                '''
             }
+
+            archiveArtifacts artifacts: 'zap_report.html', fingerprint: true
         }
+    }
+}
+
+post {
+    always {
+        cleanWs()
     }
 }
 ```
