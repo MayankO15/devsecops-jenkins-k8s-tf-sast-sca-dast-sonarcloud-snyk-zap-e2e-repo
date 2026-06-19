@@ -1,108 +1,116 @@
 pipeline {
 agent any
 
+```
 tools {
-maven 'Maven_3_8_4'
+    maven 'Maven_3_8_4'
 }
 
-	stage('Create Namespace') {
-    	steps {
-        	sh '''
-        	kubectl get namespace devsecops || \
-        	kubectl create namespace devsecops
-        	'''
-    }
-}
-	
 stages {
 
-stage('Compile and Run Sonar Analysis') {
-steps {
-sh '''
-               mvn clean verify sonar:sonar \
-               -Dsonar.projectKey=mayanko15 \
-               -Dsonar.organization=mayanko15 \
-               -Dsonar.host.url=https://sonarcloud.io \
-               -Dsonar.token=cb390e465e98126aa74adaa0c99bfece9cffdf14
-               '''
-}
-}
+    stage('Create Namespace') {
+        steps {
+            sh '''
+            kubectl get namespace devsecops || \
+            kubectl create namespace devsecops
+            '''
+        }
+    }
 
-stage('Run SCA Analysis Using Snyk') {
-steps {
-withCredentials([string(credentialsId: 'SYNK_TOKEN', variable: 'SYNK_TOKEN')]) {
-sh 'mvn snyk:test -fn'
-}
-}
-}
+    stage('Compile and Run Sonar Analysis') {
+        steps {
+            sh '''
+            mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=mayanko15 \
+            -Dsonar.organization=mayanko15 \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=cb390e465e98126aa74adaa0c99bfece9cffdf14
+            '''
+        }
+    }
 
-stage('Build Docker Image') {
-steps {
-withDockerRegistry([credentialsId: 'dockerlogin', url: '']) {
-script {
-app = docker.build("mayank")
-}
-}
-}
-}
+    stage('Run SCA Analysis Using Snyk') {
+        steps {
+            withCredentials([string(credentialsId: 'SYNK_TOKEN', variable: 'SYNK_TOKEN')]) {
+                sh 'mvn snyk:test -fn'
+            }
+        }
+    }
 
-stage('Push Docker Image to ECR') {
-steps {
-script {
-docker.withRegistry(
-'https://079819354494.dkr.ecr.us-west-2.amazonaws.com',
-'ecr:us-west-2:aws-credentials'
-) {
-app.push("latest")
-}
-}
-}
-}
+    stage('Build Docker Image') {
+        steps {
+            withDockerRegistry([credentialsId: 'dockerlogin', url: '']) {
+                script {
+                    app = docker.build("mayank")
+                }
+            }
+        }
+    }
 
-stage('Deploy to Kubernetes') {
-steps {
-withKubeConfig([credentialsId: 'kubelogin']) {
-sh '''
-                   echo "Current Context"
-                   kubectl config current-context
+    stage('Push Docker Image to ECR') {
+        steps {
+            script {
+                docker.withRegistry(
+                    'https://079819354494.dkr.ecr.us-west-2.amazonaws.com',
+                    'ecr:us-west-2:aws-credentials'
+                ) {
+                    app.push("latest")
+                }
+            }
+        }
+    }
 
-                   echo "Nodes"
-                   kubectl get nodes
+    stage('Deploy to Kubernetes') {
+        steps {
+            withKubeConfig([credentialsId: 'kubelogin']) {
+                sh '''
+                echo "Current Context"
+                kubectl config current-context
 
-                   echo "Deploying"
-                   kubectl delete all --all -n devsecops || true
-                   kubectl apply -f deployment.yaml -n devsecops
+                echo "Nodes"
+                kubectl get nodes
 
-                   echo "Pods"
-                   kubectl get pods -n devsecops
+                echo "Deploying"
+                kubectl delete all --all -n devsecops || true
+                kubectl apply -f deployment.yaml -n devsecops
 
-                   echo "Services"
-                   kubectl get svc -n devsecops
-                   '''
-}
-}
-}
+                echo "Pods"
+                kubectl get pods -n devsecops
 
-stage('Wait for Testing') {
-steps {
-sh '''
-               pwd
-               sleep 360
-               echo "Application has been deployed on K8S"
-               '''
-}
-}
+                echo "Services"
+                kubectl get svc -n devsecops
+                '''
+            }
+        }
+    }
 
+    stage('Wait for Testing') {
+        steps {
+            sh '''
+            pwd
+            sleep 360
+            echo "Application has been deployed on K8S"
+            '''
+        }
+    }
 
-stage('RunDASTUsingZAP') {
-steps {
-withKubeConfig([credentialsId: 'kubelogin']) {
-sh('zap.sh -cmd -quickurl http://$(kubectl get services/mayank --namespace=devsecops -o json| jq -r ".status.loadBalancer.ingress[] | .hostname") -quickprogress -quickout ${WORKSPACE}/zap_report.html')
-archiveArtifacts artifacts: 'zap_report.html'
+    stage('RunDASTUsingZAP') {
+        steps {
+            withKubeConfig([credentialsId: 'kubelogin']) {
+                sh '''
+                zap.sh -cmd \
+                -quickurl http://$(kubectl get services/mayank --namespace=devsecops -o json | jq -r ".status.loadBalancer.ingress[] | .hostname") \
+                -quickprogress \
+                -quickout ${WORKSPACE}/zap_report.html
+                '''
+
+                archiveArtifacts artifacts: 'zap_report.html'
+            }
+        }
+    }
 }
-}
-} 
-}
+```
+
 }
 
 
