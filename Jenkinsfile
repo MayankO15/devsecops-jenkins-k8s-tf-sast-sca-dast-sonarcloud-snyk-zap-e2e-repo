@@ -26,7 +26,7 @@ stages {
             -Dsonar.projectKey=mayanko15 \
             -Dsonar.organization=mayanko15 \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=https://sonarcloud.io/login?mp_linker_id=%24device%3Ae665b23c-396f-403c-9092-b02070086c11&_gl=1*1dmv5h1*_gcl_au*MTgwMzc1NjczLjE3ODEwOTE1NzE.*_ga*NDE1MTkwNDczLjE3ODEwOTE1NzA.*_ga_9JZ0GZ5TC6*czE3ODEwOTE1NzAkbzEkZzEkdDE3ODEwOTE1NzEkajYwJGwwJGgw
+            -Dsonar.token=cb390e465e98126aa74adaa0c99bfece9cffdf14
             '''
         }
     }
