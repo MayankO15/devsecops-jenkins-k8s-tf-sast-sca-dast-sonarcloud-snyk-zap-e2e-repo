@@ -21,12 +21,17 @@ stages{
     }
 
     stage('Run SCA Analysis Using Snyk') {
-        steps {
-            withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
-                sh 'mvn snyk:test -fn'
-            }
+    steps {
+        withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
+            sh '''
+            export SNYK_TOKEN=$SNYK_TOKEN
+            snyk auth $SNYK_TOKEN
+            snyk test --file=pom.xml --json-file-output=snyk_report.json || true
+            '''
         }
+        archiveArtifacts artifacts: 'snyk_report.json', fingerprint: true
     }
+}
 
     stage('Build Docker Image') {
         steps {
