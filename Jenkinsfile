@@ -72,14 +72,32 @@ stages{
         }
     }
 
-   stage('RunDASTUsingZAP') {
-          steps {
-		    withKubeConfig([credentialsId: 'kubelogin']) {
-				sh('zap.sh -cmd -quickurl http://$(kubectl get services/mayank --namespace=devsecops -o json| jq -r ".status.loadBalancer.ingress[] | .hostname") -quickprogress -quickout ${WORKSPACE}/zap_report.html')
-				archiveArtifacts artifacts: 'zap_report.html'
-		    }
-	     }
-       } 
+  stage('Run DAST Using ZAP') {
+    steps {
+        withKubeConfig([credentialsId: 'kubelogin']) {
+            sh '''
+            APP_URL=$(kubectl get svc mayank \
+              -n devsecops \
+              -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+
+            echo "Target URL: http://$APP_URL"
+
+            mkdir -p "$WORKSPACE/zap"
+            chmod 777 "$WORKSPACE/zap"
+
+            docker run --rm \
+              -v "$WORKSPACE/zap:/zap/wrk" \
+              ghcr.io/zaproxy/zaproxy:stable \
+              zap-baseline.py \
+              -t "http://$APP_URL" \
+              -r zap_report.html
+            '''
+        }
+
+        archiveArtifacts artifacts: 'zap/zap_report.html', fingerprint: true
+    }
+}
+	
   }
 }
 
