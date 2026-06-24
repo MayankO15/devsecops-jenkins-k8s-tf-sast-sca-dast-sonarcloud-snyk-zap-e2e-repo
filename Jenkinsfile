@@ -4,21 +4,11 @@ agent any
 ```
 tools {
     maven 'Maven_3_8_4'
+
 }
 
-stages {
-
-    stage('Create Namespace') {
-        steps {
-            withKubeConfig([credentialsId: 'kubelogin']) {
-                sh '''
-                kubectl get namespace devsecops >/dev/null 2>&1 || \
-                kubectl create namespace devsecops
-                '''
-            }
-        }
-    }
-
+stages{
+    
     stage('Compile and Run Sonar Analysis') {
         steps {
             sh '''
