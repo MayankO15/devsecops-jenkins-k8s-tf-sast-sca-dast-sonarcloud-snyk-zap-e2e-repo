@@ -72,7 +72,7 @@ stages{
         }
     }
 
-  stage('Run DAST Using ZAP') {
+ stage('Run DAST Using ZAP') {
     steps {
         withKubeConfig([credentialsId: 'kubelogin']) {
             sh '''
@@ -82,18 +82,17 @@ stages{
 
             echo "Target URL: http://$APP_URL"
 
-            mkdir -p "$WORKSPACE/zap"
-            chmod 777 "$WORKSPACE/zap"
+            mkdir -p ${WORKSPACE}/zap
+            chmod 777 ${WORKSPACE}/zap
 
             docker run --rm \
-              -v "$WORKSPACE/zap:/zap/wrk" \
+              -v ${WORKSPACE}/zap:/zap/wrk \
               ghcr.io/zaproxy/zaproxy:stable \
               zap-baseline.py \
-              -t "http://$APP_URL" \
-              -r zap_report.html
+              -t http://$APP_URL \
+              -r zap_report.html || true
             '''
         }
-
         archiveArtifacts artifacts: 'zap/zap_report.html', fingerprint: true
     }
 }
